@@ -1,0 +1,74 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Traffic Command Centre</title>
+<link rel="preconnect" href="https://tile.openstreetmap.org" crossorigin><link rel="preconnect" href="https://overpass-api.de" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="style.css"></head><body>
+<header class="bar"><b>Traffic Command Centre</b><span id="st" class="chip">Paused</span><span class="chip" id="clock">00:00</span>
+<span class="chip" id="nv">0 vehicles</span><span class="chip" id="nc">0 closures</span><span class="chip warn" id="src">SIMULATED DATA</span></header>
+<main id="app">
+
+<aside class="panel left" id="pl">
+ <div class="ph"><b>Traffic visualization</b><button class="min" data-min="pl" title="Collapse">&minus;</button></div>
+ <div class="tabs"><button data-t="map" class="on">Map</button><button data-t="sim">Simulate</button><button data-t="clo">Closures</button><button data-t="em">Emergency</button></div>
+ <div class="pane" data-p="map">
+  <h3>Area</h3>
+  <div class="row"><select id="scale"><option value="0">Neighbourhood 1.5 km</option><option value="1" selected>District 3 km</option><option value="2">City 6 km</option><option value="3">Bangalore region 30 km (major roads)</option></select></div>
+  <button id="here" class="wide pri">Load real roads around map centre</button>
+  <button id="loc" class="wide">Use my location</button>
+  <button id="imp" class="wide">Import Overpass JSON file (offline backup)</button><input id="file" type="file" accept=".json" hidden>
+  <h3>Layers</h3>
+  <label class="sw"><input id="heat" type="checkbox" checked> Density heatmap</label>
+  <label class="sw"><input id="gridl" type="checkbox"> Grid lines</label>
+  <label class="sw"><input id="glowt" type="checkbox" checked> Rerouting glow</label>
+  <label class="sw"><input id="vehs" type="checkbox" checked> Vehicles</label>
+ </div>
+ <div class="pane" data-p="sim" hidden>
+  <h3>Simulation</h3>
+  <div class="row"><button id="start" class="pri">Start</button><button id="pause">Pause</button><button id="reset">Reset</button></div>
+  <div class="row"><label>Speed <select id="speed"><option>1</option><option>2</option><option>5</option><option>10</option></select>x</label><label>Vehicles <input id="nveh" type="number" value="300" min="10" max="1500"></label></div>
+  <button id="demo" class="pri wide">Run demo: jam + closure rerouting</button>
+  <h3>Route optimizer</h3>
+  <div class="row"><label>Algorithm <select id="algo"><option value="astar">A*</option><option value="dijkstra">Dijkstra</option><option value="both">Compare both</option></select></label></div>
+  <label class="sw"><input id="lb" type="checkbox" checked> Load balancing</label>
+  <label class="sw"><input id="aj" type="checkbox" checked> Auto-reroute jams</label>
+  <details><summary>Cost formula</summary><p class="small">cost = length/speed x (1 + 0.6 x (V/C)^3 + 0.5 x cellDensity). V = vehicles on road + predicted load; V/C capped at 3. Closed roads are excluded, not penalised.</p></details>
+ </div>
+ <div class="pane" data-p="em" hidden>
+  <h3>Dispatch</h3>
+  <div class="row"><select id="emType"><option value="ambulance">&#x1F691; Ambulance</option><option value="police">&#x1F693; Police car</option><option value="fire">&#x1F692; Fire truck</option></select></div>
+  <button id="emSend" class="wide pri">Dispatch to random incident</button>
+  <button id="emPick" class="wide">Pick incident location on map</button>
+  <button id="emAll" class="wide">Dispatch all three</button>
+  <button id="emBlock" class="wide">Close a road ahead of a unit (test redirect)</button>
+  <button id="emDemo" class="wide pri">Run emergency demo</button>
+  <label class="sw"><input id="emPri" type="checkbox" checked> Clear the way (priority corridor)</label>
+  <details><summary>How it works</summary><p class="small">Units are routed with their own cost model (1.4x speed, weak congestion penalty) using the selected algorithm (A* or Dijkstra) and re-planned every 3 s, so they are redirected around closures and jams. Cars ahead on the same road pull over (yellow ring); cars about to enter the unit's path are diverted by the load-balanced assignment with a x6 penalty on those roads.</p></details>
+  <h3>Active units</h3><div id="emList" class="small">No active units.</div>
+  <h3>Statistics</h3><div id="emStats" class="stats"></div>
+  <h3>Event log</h3><div id="emLog" class="small">No events yet.</div>
+ </div>
+ <div class="pane" data-p="clo" hidden>
+  <h3>Close a road</h3>
+  <div class="row"><select id="road"></select><select id="reason"><option>construction</option><option>accident</option><option>manual test</option></select></div>
+  <button id="close" class="wide">Close selected road</button>
+  <h3>Active closures</h3><div id="closures" class="small">None.</div>
+  <p class="small">Tip: click any road on the map to select it.</p>
+ </div>
+</aside>
+
+<section id="stage"><div id="map"></div><div id="toast"></div><div class="legend"><b>Road congestion</b><div class="grad"></div><div class="lab"><span>Free</span><span>Busy</span><span>Heavy</span><span>Jam</span></div>
+<div class="lr"><i class="dash"></i>Closed road</div><div class="lr"><i class="gl"></i>Rerouted traffic</div>
+<b>Grid density</b><div class="grad grad2"></div><div class="lab"><span>Low</span><span>High</span></div>
+<b>Vehicles</b><div class="lr">🚗 🏍️ 🛺 Moving</div><div class="lr"><span class="vd" style="background:#fff"></span>White halo: rerouted</div><div class="lr"><span class="vd" style="background:#8e8e93"></span>Faded: stranded</div><div class="lr"><span class="vd" style="background:#ff3b30"></span>Red pulse: emergency unit</div><div class="lr"><span class="vd" style="background:#ffd60a"></span>Yellow ring: making way</div></div><div class="mapbar"><select id="bm" title="Map mode"><option value="osm">Street map</option><option value="heat">Heatmap</option><option value="none">Schematic (no tiles)</option></select><button id="fitb" title="Fit network">Fit</button></div></section>
+<aside class="panel right" id="pr">
+ <div class="ph"><b>Analytics</b><button class="min" data-min="pr" title="Collapse">&minus;</button></div>
+ <div id="detail" class="card small">Click a road, vehicle or grid cell.</div>
+ <div class="tabs"><button data-t="ov" class="on">Overview</button><button data-t="rr">Reroutes</button><button data-t="cmp">Compare</button></div>
+ <div class="pane" data-p="ov"><div id="stats" class="stats"></div><h3>Hottest grid cells</h3><div id="hot" class="small"></div>
+  <h3>Average speed</h3><div id="chSpeed"></div><h3>Jammed roads</h3><div id="chJam"></div></div>
+ <div class="pane" data-p="rr" hidden><div id="rr" class="small">No rerouting yet.</div><h3>Receiving diverted traffic</h3><div id="div" class="small">None yet.</div></div>
+ <div class="pane" data-p="cmp" hidden><button id="cmp" class="wide pri">Compare load balancing ON vs OFF</button><div id="cmpOut" class="small">Runs both options on the same pre-closure snapshot.</div></div>
+</aside>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script type="module" src="src/app.js?v=16"></script></body></html>
