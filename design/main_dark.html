@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Main (dark) - Traffic Command Centre</title>
+<!-- Tailwind CSS v3 with Forms & Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            apple: {
+              blue: '#0A84FF',
+              green: '#34C759',
+              orange: '#FF9F0A',
+              yellow: '#FFD60A',
+              red: '#FF453A',
+              purple: '#BF5AF2',
+              card: 'rgba(24, 25, 29, 0.74)',
+              cardBorder: 'rgba(255, 255, 255, 0.12)',
+              pillBg: 'rgba(255, 255, 255, 0.08)',
+              pillHover: 'rgba(255, 255, 255, 0.14)',
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Inter', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<!-- BEGIN: Custom Apple Glass Styles -->
+<style data-purpose="glass-and-tokens">
+    /* Tabular figures for telemetry accuracy */
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Apple VisionOS / macOS Sonoma frosted dark glass effect */
+    .apple-glass {
+      background: rgba(22, 24, 29, 0.76);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.55), 
+                  0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    }
+
+    .apple-glass-pill {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .apple-glass-button {
+      background: rgba(30, 32, 38, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .apple-glass-button:hover {
+      background: rgba(45, 48, 56, 0.88);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
+    }
+    .apple-glass-button:active {
+      transform: scale(0.96);
+    }
+
+    /* Neon neon polyline filters */
+    .glow-green {
+      filter: drop-shadow(0 0 7px rgba(52, 199, 89, 0.65));
+    }
+    .glow-blue {
+      filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.8));
+    }
+    .glow-yellow {
+      filter: drop-shadow(0 0 6px rgba(255, 214, 10, 0.6));
+    }
+    .glow-orange {
+      filter: drop-shadow(0 0 7px rgba(255, 159, 10, 0.7));
+    }
+    .glow-red {
+      filter: drop-shadow(0 0 9px rgba(255, 69, 58, 0.85));
+    }
+
+    /* Subtitle grid map lines animation */
+    @keyframes pulseSlow {
+      0%, 100% { opacity: 0.85; }
+      50% { opacity: 1; }
+    }
+    .traffic-pulse {
+      animation: pulseSlow 3s infinite ease-in-out;
+    }
+  </style>
+<!-- END: Custom Apple Glass Styles -->
+</head>
+<body class="bg-[#0b0d11] text-[#F5F5F7] font-sans antialiased overflow-hidden select-none w-screen h-screen relative">
+<!-- BEGIN: Edge-to-Edge Map Canvas Background -->
+<div class="absolute inset-0 z-0 overflow-hidden bg-[#0e1117]" data-purpose="dark-mode-map-layer">
+<svg class="w-full h-full object-cover" fill="none" viewbox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<!-- Background Grid Pattern -->
+<pattern height="64" id="cityGrid" patternunits="userSpaceOnUse" width="64">
+<path d="M 64 0 L 0 0 0 64" fill="none" stroke="rgba(255,255,255,0.035)" stroke-width="1.2"></path>
+</pattern>
+<!-- Ambient Water Gradients -->
+<lineargradient gradientunits="userSpaceOnUse" id="oceanGrad" x1="720" x2="720" y1="520" y2="900">
+<stop offset="0%" stop-color="#0c1d33" stop-opacity="0.95"></stop>
+<stop offset="100%" stop-color="#071221" stop-opacity="1"></stop>
+</lineargradient>
+<lineargradient gradientunits="userSpaceOnUse" id="bayRiverGrad" x1="900" x2="980" y1="0" y2="480">
+<stop offset="0%" stop-color="#0e233d" stop-opacity="0.9"></stop>
+<stop offset="100%" stop-color="#0b1b30" stop-opacity="0.8"></stop>
+</lineargradient>
+<!-- Park / Botanical Areas -->
+<radialgradient cx="50%" cy="50%" id="parkGlow" r="50%">
+<stop offset="0%" stop-color="#142e22" stop-opacity="0.7"></stop>
+<stop offset="100%" stop-color="#0f2018" stop-opacity="0.3"></stop>
+</radialgradient>
+</defs>
+<!-- Base Canvas Background -->
+<rect fill="#11141a" height="900" width="1440"></rect>
+<rect fill="url(#cityGrid)" height="900" width="1440"></rect>
+<!-- Botanical Parks (Dark Emerald Patches) -->
+<path d="M 120 220 Q 230 190 270 290 T 140 430 Q 60 360 120 220 Z" fill="url(#parkGlow)"></path>
+<path d="M 650 110 C 780 90 840 230 830 330 C 770 410 630 390 610 270 C 590 170 620 120 650 110 Z" fill="url(#parkGlow)"></path>
+<path d="M 1320 340 C 1420 320 1480 430 1450 510 C 1390 560 1310 500 1320 340 Z" fill="url(#parkGlow)"></path>
+<!-- River Channel (Top-right coming down) -->
+<path d="M 940 0 C 920 110 880 200 870 330 C 860 440 900 520 920 560 L 1020 560 C 990 490 960 410 970 320 C 990 210 1040 100 1070 0 Z" fill="url(#bayRiverGrad)"></path>
+<!-- Ocean / Bay (South District) -->
+<path d="M -10 540 C 240 540 460 630 760 630 C 1040 630 1260 520 1450 520 L 1450 910 L -10 910 Z" fill="url(#oceanGrad)" stroke="rgba(15, 130, 255, 0.15)" stroke-width="2"></path>
+<!-- District Minor Arteries (Low contrast roads) -->
+<g stroke="rgba(255, 255, 255, 0.08)" stroke-linecap="round" stroke-linejoin="round" stroke-width="12">
+<line x1="20" x2="1420" y1="280" y2="280"></line>
+<line x1="324" x2="324" y1="20" y2="820"></line>
+<line x1="520" x2="520" y1="10" y2="650"></line>
+<line x1="880" x2="1420" y1="260" y2="470"></line>
+<line x1="110" x2="550" y1="670" y2="430"></line>
+<line x1="370" x2="680" y1="640" y2="470"></line>
+</g>
+<g stroke="rgba(255, 255, 255, 0.14)" stroke-linecap="round" stroke-width="6">
+<line x1="20" x2="1420" y1="280" y2="280"></line>
+<line x1="324" x2="324" y1="20" y2="820"></line>
+<line x1="520" x2="520" y1="10" y2="650"></line>
+</g>
+<!-- ACTIVE TRAFFIC CORRIDORS (Neon Polyline Overlays) -->
+<!-- Green Flowing Free Corridor (North to Marina) -->
+<path class="glow-green traffic-pulse" d="M 440 180 C 470 230 500 320 540 420 C 580 520 660 630 780 730" fill="none" stroke="#34C759" stroke-linecap="round" stroke-width="8"></path>
+<!-- Amber/Yellow Moderate Flow (Cross town diagonal) -->
+<path class="glow-yellow" d="M 200 230 L 520 230 C 620 230 680 270 780 340 L 980 470" fill="none" stroke="#FFD60A" stroke-linecap="round" stroke-width="7"></path>
+<!-- Blue Primary Route (Optimal reroute line matching UI) -->
+<path class="glow-blue" d="M 210 280 L 360 280 C 440 280 480 380 570 470 C 670 560 810 570 940 570" fill="none" stroke="#0A84FF" stroke-linecap="round" stroke-width="9"></path>
+<!-- Orange Congested Corridor (Broadway bypass) -->
+<path class="glow-orange" d="M 780 340 C 860 390 920 420 1020 460 C 1180 520 1340 680 1440 760" fill="none" stroke="#FF9F0A" stroke-linecap="round" stroke-width="8"></path>
+<!-- Red Severe Jam (East Corridor Critical bottleneck) -->
+<path class="glow-red traffic-pulse" d="M 640 320 C 720 370 780 430 840 450 C 900 470 950 470 980 475" fill="none" stroke="#FF453A" stroke-dasharray="14 4" stroke-linecap="round" stroke-width="9"></path>
+<!-- Map District Labels (Dark Typography) -->
+<text fill="#636979" font-size="12" font-weight="700" letter-spacing="0.16em" text-anchor="middle" x="760" y="160">METRO BOTANICAL</text>
+<text fill="#585E6E" font-size="11" font-weight="700" letter-spacing="0.14em" x="82" y="272">CENTRAL BLVD</text>
+<text fill="#585E6E" font-size="11" font-weight="700" letter-spacing="0.14em" transform="rotate(90, 334, 610)" x="334" y="610">WEST PARKWAY</text>
+<text fill="#585E6E" font-size="11" font-weight="700" letter-spacing="0.14em" transform="rotate(90, 532, 320)" x="532" y="320">MARKET ST</text>
+<text fill="#657288" font-size="12" font-weight="700" letter-spacing="0.16em" x="800" y="615">MARINA DISTRICT</text>
+<!-- Live Waypoint Nodes & Floating Markers -->
+<!-- Start Origin Marker (Blue) -->
+<circle class="glow-blue" cx="210" cy="280" fill="#0A84FF" r="7" stroke="#FFFFFF" stroke-width="2.5"></circle>
+<circle cx="210" cy="280" fill="none" opacity="0.4" r="14" stroke="#0A84FF" stroke-width="1.5"></circle>
+<!-- Moving Fleet Vehicle 1 (Autonomous Pod on Blue line) -->
+<g transform="translate(356, 268)">
+<rect fill="#1C1E24" height="24" rx="12" stroke="#0A84FF" stroke-width="2" width="24"></rect>
+<text font-size="12" text-anchor="middle" x="12" y="16">🚖</text>
+</g>
+<!-- Vehicle 2 (Green Corridor Transit) -->
+<g transform="translate(415, 205)">
+<rect fill="#1C1E24" height="24" rx="12" stroke="#34C759" stroke-width="2" width="24"></rect>
+<text font-size="12" text-anchor="middle" x="12" y="16">🚌</text>
+</g>
+<!-- Vehicle 3: Emergency Vehicle Near Jam -->
+<g transform="translate(665, 345)">
+<circle class="traffic-pulse" cx="13" cy="13" fill="#FF453A" opacity="0.25" r="14"></circle>
+<rect fill="#1C1E24" height="26" rx="13" stroke="#FF453A" stroke-width="2" width="26"></rect>
+<text font-size="13" text-anchor="middle" x="13" y="18">🚑</text>
+</g>
+<!-- Incident Road Closure Hazard Marker -->
+<g transform="translate(775, 412)">
+<rect fill="#1C1E24" height="24" rx="12" stroke="#FF9F0A" stroke-width="2" width="24"></rect>
+<text font-size="12" text-anchor="middle" x="12" y="16">🚧</text>
+</g>
+<g transform="translate(845, 465)">
+<rect fill="#1C1E24" height="22" rx="11" stroke="#FFD60A" stroke-width="1.8" width="22"></rect>
+<text font-size="11" text-anchor="middle" x="11" y="15">🏎️</text>
+</g>
+</svg>
+</div>
+<!-- END: Edge-to-Edge Map Canvas Background -->
+<!-- BEGIN: Top Left Floating Glass Card -->
+<div class="absolute top-6 left-6 z-20 w-[416px] apple-glass rounded-[22px] p-5 shadow-2xl backdrop-blur-3xl" data-purpose="top-left-command-card">
+<!-- Header title and search pill -->
+<div class="flex items-center justify-between pb-3.5 border-b border-white/10">
+<div class="flex items-center space-x-3">
+<!-- Blue Map App Icon -->
+<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0A84FF] to-[#0055D6] flex items-center justify-center shadow-lg shadow-blue-500/25 ring-1 ring-white/20">
+<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+</svg>
+</div>
+<div>
+<h1 class="text-[17px] font-semibold tracking-tight text-white leading-tight">Traffic Command Centre</h1>
+<p class="text-[11px] font-medium text-[#98989D] leading-tight mt-0.5">Autonomous Regional Network Ops</p>
+</div>
+</div>
+<!-- Area Search Dropdown Pill -->
+<button class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full apple-glass-pill text-xs font-medium text-white/90 hover:text-white hover:bg-white/15 transition-all">
+<svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+</svg>
+<span class="text-[12px]">District 3 km</span>
+<svg class="w-3 h-3 text-white/50" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</div>
+<!-- Segmented Navigation Pills -->
+<div class="mt-4 p-1 rounded-xl bg-black/40 border border-white/5 grid grid-cols-3 gap-1">
+<button class="py-1.5 text-[13px] font-semibold rounded-lg bg-[#2C2C2E] text-white shadow-sm transition-all text-center">
+        Map
+      </button>
+<button class="py-1.5 text-[13px] font-medium rounded-lg text-[#98989D] hover:text-white hover:bg-white/5 transition-all text-center">
+        Simulate
+      </button>
+<button class="py-1.5 text-[13px] font-medium rounded-lg text-[#98989D] hover:text-white hover:bg-white/5 transition-all text-center">
+        Closures
+      </button>
+</div>
+<!-- Live Telemetry Status Badges -->
+<div class="mt-3.5 flex items-center justify-between gap-1.5 text-xs">
+<!-- Pulsing Running State -->
+<div class="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[#34C759]">
+<span class="w-2 h-2 rounded-full bg-[#34C759] inline-block animate-ping"></span>
+<span class="font-semibold text-[11px] tracking-wide">Running</span>
+</div>
+<!-- Clock Counter -->
+<div class="flex items-center space-x-1 px-2.5 py-1.5 rounded-full apple-glass-pill text-[#D1D1D6] tabular-nums font-mono text-[11px]">
+<span>⏱️</span>
+<span class="font-medium">01:15</span>
+</div>
+<!-- Vehicle Count -->
+<div class="flex items-center space-x-1 px-2.5 py-1.5 rounded-full apple-glass-pill text-[#D1D1D6] tabular-nums text-[11px]">
+<span>🚗</span>
+<span><strong class="text-white font-semibold">300</strong> veh</span>
+</div>
+<!-- Closure Alert -->
+<div class="flex items-center space-x-1 px-2.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px]">
+<span>🚧</span>
+<span class="font-medium">1 closure</span>
+</div>
+</div>
+</div>
+<!-- END: Top Left Floating Glass Card -->
+<!-- BEGIN: Top Right Apple System Action Dock -->
+<div class="absolute top-6 right-6 z-20 flex flex-col space-y-2.5" data-purpose="map-quick-controls">
+<button class="w-10 h-10 rounded-full apple-glass-button flex items-center justify-center text-white/90 text-lg hover:text-white" title="Zoom in">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"></path>
+</svg>
+</button>
+<button class="w-10 h-10 rounded-full apple-glass-button flex items-center justify-center text-white/90 text-lg hover:text-white" title="Zoom out">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M20 12H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4"></path>
+</svg>
+</button>
+<button class="w-10 h-10 rounded-full apple-glass-button flex items-center justify-center text-[#0A84FF] hover:text-blue-400" title="Center Location">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"></path>
+</svg>
+</button>
+<button class="w-10 h-10 rounded-full apple-glass-button flex items-center justify-center text-white/80 hover:text-white" title="Map Layers">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<button class="w-10 h-10 rounded-full apple-glass-button flex items-center justify-center text-white/80 hover:text-white" title="Fullscreen Mode">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+<!-- Dark/Night Mode indicator button (Moon highlighted) -->
+<button class="w-10 h-10 rounded-full bg-[#0A84FF]/20 border border-[#0A84FF]/40 text-[#0A84FF] flex items-center justify-center shadow-lg shadow-blue-500/20" title="Night Vision Mode (Active)">
+<svg class="w-4 h-4" fill="currentColor" viewbox="0 0 24 24">
+<path d="M12.3 2a10 10 0 0 0-1.9 20 10 10 0 0 0 10-8.5c0-.3-.2-.5-.5-.5a.5.5 0 0 0-.4.2 8 8 0 0 1-9-9c0-.2 0-.3.2-.4a.5.5 0 0 0-.2-.8l-0.2-.1z"></path>
+</svg>
+</button>
+</div>
+<!-- END: Top Right Apple System Action Dock -->
+<!-- BEGIN: Right Side Floating Pinterest Masonry Glass Card Board -->
+<div class="absolute top-6 right-20 z-20 w-[430px] flex flex-col space-y-3.5 max-h-[calc(100vh-100px)] overflow-y-auto pr-1 no-scrollbar" data-purpose="right-side-board">
+<!-- Top Row: Split Metrics Cards (Saturation & Optimal Reroute) -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Card 1: Network Saturation -->
+<div class="apple-glass rounded-[20px] p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-[#98989D]">Network Saturation</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-[#FF9F0A] border border-amber-500/30">
+              Heavy
+            </span>
+</div>
+<div class="mt-2.5 flex items-baseline space-x-1.5">
+<span class="text-[34px] font-bold text-white tabular-nums tracking-tight">0.92</span>
+<span class="text-[12px] font-medium text-[#98989D]">Peak V/C</span>
+</div>
+</div>
+<div class="mt-3">
+<!-- Gradient Saturation Gauge -->
+<div class="w-full h-1.5 rounded-full bg-white/10 overflow-hidden relative">
+<div class="h-full rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-[#FF453A]" style="width: 92%;"></div>
+</div>
+<div class="mt-2 flex items-center justify-between text-[11px]">
+<span class="text-[#8E8E93]">Target &lt; 0.75</span>
+<span class="text-amber-400 font-semibold tabular-nums">+0.14 vs base</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Optimal Reroute Capsule -->
+<div class="apple-glass rounded-[20px] p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-[#98989D]">Optimal Reroute</span>
+<span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#34C759]/20 text-[#34C759] border border-emerald-500/30">
+              -5 min
+            </span>
+</div>
+<div class="mt-2.5 flex items-center justify-between">
+<div>
+<div class="text-[22px] font-bold text-white tabular-nums">14 min</div>
+<div class="text-[11px] text-[#98989D] font-medium">via Ring Road</div>
+</div>
+<div class="w-8 h-8 rounded-full bg-[#0A84FF]/20 border border-[#0A84FF]/40 text-[#0A84FF] flex items-center justify-center">
+<svg class="w-4 h-4 transform rotate-45" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M5 10l7-7m0 0l7 7m-7-7v18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+<span class="text-white/80 font-medium">5.2 km • Fastest path</span>
+</div>
+</div>
+</div>
+<!-- Wide Action Card: Broadcast Advisory CTA -->
+<div class="apple-glass rounded-[18px] p-2.5 flex items-center justify-between">
+<div class="flex items-center space-x-2 pl-2">
+<div class="w-2.5 h-2.5 rounded-full bg-[#0A84FF] animate-pulse"></div>
+<span class="text-xs font-semibold text-white/90">Autonomous re-routing ready</span>
+</div>
+<button class="px-4 py-2 rounded-xl bg-[#0A84FF] hover:bg-[#0071E3] active:scale-[0.98] text-white text-xs font-semibold shadow-lg shadow-blue-600/30 transition-all flex items-center space-x-1.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+</svg>
+<span>Broadcast Advisory</span>
+</button>
+</div>
+<!-- Middle Row: Velocity Sparkline Card & Hot Grid Cells -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Velocity Trend Card -->
+<div class="apple-glass rounded-[20px] p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-[#98989D]">Velocity</span>
+<span class="text-[11px] font-bold text-[#FF453A] flex items-center space-x-0.5">
+<span>↓</span><span>3.8%</span>
+</span>
+</div>
+<div class="mt-1 flex items-baseline space-x-1">
+<span class="text-[28px] font-bold text-white tabular-nums">28.4</span>
+<span class="text-[12px] font-medium text-[#98989D]">km/h</span>
+</div>
+</div>
+<!-- Glowing Neon Sparkline -->
+<div class="mt-2 w-full">
+<svg class="w-full h-11 overflow-visible" fill="none" viewbox="0 0 160 40">
+<!-- Gradient definition under line -->
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="sparklineGlow" x1="0" x2="0" y1="0" y2="40">
+<stop offset="0%" stop-color="#0A84FF" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#0A84FF" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<path d="M 0 10 Q 30 6, 60 14 T 110 32 T 160 22 L 160 40 L 0 40 Z" fill="url(#sparklineGlow)"></path>
+<path class="glow-blue" d="M 0 10 Q 30 6, 60 14 T 110 32 T 160 22" fill="none" stroke="#0A84FF" stroke-linecap="round" stroke-width="2.5"></path>
+<circle cx="160" cy="22" fill="#FFFFFF" r="3.5" stroke="#0A84FF" stroke-width="2"></circle>
+</svg>
+<div class="mt-1 flex justify-between text-[10px] text-[#636366] font-medium">
+<span>10m ago</span>
+<span>Now</span>
+</div>
+</div>
+</div>
+<!-- Hot Grid Cells Heat Matrix -->
+<div class="apple-glass rounded-[20px] p-4 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-semibold uppercase tracking-wider text-[#98989D]">Hot Grid Cells</span>
+<span class="text-[10px] text-[#8E8E93]">100m² blocks</span>
+</div>
+<!-- Heat Matrix Grid -->
+<div class="grid grid-cols-4 gap-1.5 mt-3">
+<div class="h-6 rounded-md bg-emerald-500/20 text-[#34C759] border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold">A1</div>
+<div class="h-6 rounded-md bg-amber-400/25 text-amber-300 border border-amber-400/30 flex items-center justify-center text-[10px] font-bold">A2</div>
+<div class="h-6 rounded-md bg-orange-500/30 text-orange-300 border border-orange-500/40 flex items-center justify-center text-[10px] font-bold">A3</div>
+<div class="h-6 rounded-md bg-red-500/35 text-red-300 border border-red-500/40 flex items-center justify-center text-[10px] font-bold">A4</div>
+<div class="h-6 rounded-md bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 flex items-center justify-center text-[10px] font-bold">B1</div>
+<div class="h-6 rounded-md bg-orange-500/30 text-orange-300 border border-orange-500/40 flex items-center justify-center text-[10px] font-bold">B2</div>
+<div class="h-6 rounded-md bg-red-600/70 text-white border border-red-400 ring-2 ring-red-500/40 flex items-center justify-center text-[10px] font-extrabold animate-pulse">B3</div>
+<div class="h-6 rounded-md bg-amber-500/25 text-amber-300 border border-amber-500/30 flex items-center justify-center text-[10px] font-bold">B4</div>
+</div>
+</div>
+<div class="mt-2.5 text-[11px] leading-tight text-white/90">
+<span>Critical Cell: <strong class="text-white">B3 (Civic Ctr)</strong></span>
+<span class="block text-[#FF453A] font-semibold tabular-nums mt-0.5">1,580 veh/hr</span>
+</div>
+</div>
+</div>
+<!-- Card 3: Congested Corridors Live Telemetry List -->
+<div class="apple-glass rounded-[20px] p-4">
+<div class="flex items-center justify-between pb-2 border-b border-white/10">
+<h3 class="text-xs font-semibold text-white tracking-wide">Congested Corridors</h3>
+<div class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
+<span class="text-[11px] font-medium text-[#98989D]">Live sensor</span>
+</div>
+</div>
+<div class="space-y-3 mt-3">
+<!-- East Corridor (Jam) -->
+<div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-medium text-white/90">East Corridor</span>
+<span class="flex items-center space-x-1 text-[11px] font-bold text-[#FF453A]">
+<span class="w-2 h-2 rounded-full bg-[#FF453A] inline-block"></span>
+<span>Jam (94%)</span>
+</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-white/10 mt-1.5 overflow-hidden">
+<div class="h-full bg-[#FF453A] rounded-full glow-red" style="width: 94%;"></div>
+</div>
+</div>
+<!-- Central Ave (Heavy) -->
+<div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-medium text-white/90">Central Ave</span>
+<span class="flex items-center space-x-1 text-[11px] font-bold text-[#FF9F0A]">
+<span class="w-2 h-2 rounded-full bg-[#FF9F0A] inline-block"></span>
+<span>Heavy (78%)</span>
+</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-white/10 mt-1.5 overflow-hidden">
+<div class="h-full bg-[#FF9F0A] rounded-full glow-orange" style="width: 78%;"></div>
+</div>
+</div>
+<!-- Broadway Blvd (Busy) -->
+<div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-medium text-white/90">Broadway Blvd</span>
+<span class="flex items-center space-x-1 text-[11px] font-bold text-[#FFD60A]">
+<span class="w-2 h-2 rounded-full bg-[#FFD60A] inline-block"></span>
+<span>Busy (56%)</span>
+</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-white/10 mt-1.5 overflow-hidden">
+<div class="h-full bg-[#FFD60A] rounded-full glow-yellow" style="width: 56%;"></div>
+</div>
+</div>
+<!-- Outer Ring (Free) -->
+<div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-medium text-white/90">Outer Ring</span>
+<span class="flex items-center space-x-1 text-[11px] font-bold text-[#34C759]">
+<span class="w-2 h-2 rounded-full bg-[#34C759] inline-block"></span>
+<span>Free (16%)</span>
+</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-white/10 mt-1.5 overflow-hidden">
+<div class="h-full bg-[#34C759] rounded-full glow-green" style="width: 16%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Right Side Floating Pinterest Masonry Glass Card Board -->
+<!-- BEGIN: Bottom Left Scale & Expandable Fleet Legend -->
+<div class="absolute bottom-6 left-6 z-20 flex items-center space-x-2.5" data-purpose="bottom-left-telemetry">
+<!-- Distance scale chip -->
+<div class="apple-glass rounded-xl px-3 py-2 flex items-center space-x-2 text-[11px] font-medium text-[#98989D]">
+<div class="w-10 h-[2px] bg-white/60 relative">
+<span class="absolute -left-0.5 -top-1 w-[2px] h-2 bg-white/60"></span>
+<span class="absolute -right-0.5 -top-1 w-[2px] h-2 bg-white/60"></span>
+</div>
+<span class="text-white font-mono tabular-nums">500 m</span>
+</div>
+<!-- Fleet Inventory Category Pill -->
+<div class="apple-glass rounded-xl px-3.5 py-2 flex items-center space-x-2.5 text-xs text-white/90">
+<span class="text-[11px] font-bold tracking-wider text-[#98989D]">FLEET</span>
+<div class="flex items-center space-x-1 text-sm">
+<span>🚗</span>
+<span>🚕</span>
+<span>🚙</span>
+<span>🚌</span>
+<span>🚎</span>
+<span>🏎️</span>
+<span>🛺</span>
+<span>🚛</span>
+<span>🚚</span>
+<span>🚑</span>
+<span>🚧</span>
+<span>⚠️</span>
+</div>
+<button class="text-white/40 hover:text-white transition-colors pl-1">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</button>
+</div>
+</div>
+<!-- END: Bottom Left Scale & Expandable Fleet Legend -->
+<!-- BEGIN: Bottom Centre Apple Vision Transport Dock -->
+<div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 apple-glass rounded-[24px] px-3.5 py-2.5 flex items-center space-x-3.5 shadow-2xl border border-white/15" data-purpose="simulation-transport-dock">
+<!-- Transport Buttons: Play, Pause, Reset -->
+<div class="flex items-center space-x-1.5">
+<!-- Blue Play Action Pill Button -->
+<button class="w-9 h-9 rounded-full bg-[#0A84FF] hover:bg-blue-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/30 active:scale-95 transition-all">
+<svg class="w-4 h-4 fill-white translate-x-0.5" viewbox="0 0 24 24">
+<path d="M8 5v14l11-7z"></path>
+</svg>
+</button>
+<!-- Pause Button -->
+<button class="w-8 h-8 rounded-full apple-glass-pill hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition-all">
+<svg class="w-3.5 h-3.5 fill-white" viewbox="0 0 24 24">
+<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
+</svg>
+</button>
+<!-- Reset / Reload Button -->
+<button class="w-8 h-8 rounded-full apple-glass-pill hover:bg-white/15 text-white/90 flex items-center justify-center active:scale-95 transition-all">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.033 8.033 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"></path>
+</svg>
+</button>
+</div>
+<!-- Separator Line -->
+<div class="w-px h-5 bg-white/15"></div>
+<!-- Speed Multiplier Segmented Pill -->
+<div class="flex items-center p-0.5 rounded-full bg-black/40 border border-white/10 text-xs">
+<button class="px-2.5 py-1 rounded-full text-[#98989D] hover:text-white transition-all text-[11px] font-medium">1x</button>
+<button class="px-2.5 py-1 rounded-full bg-[#3A3A3C] text-white shadow font-semibold text-[11px]">2x</button>
+<button class="px-2.5 py-1 rounded-full text-[#98989D] hover:text-white transition-all text-[11px] font-medium">5x</button>
+<button class="px-2.5 py-1 rounded-full text-[#98989D] hover:text-white transition-all text-[11px] font-medium">10x</button>
+</div>
+<!-- Separator Line -->
+<div class="w-px h-5 bg-white/15"></div>
+<!-- Demo Launch Action -->
+<button class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-semibold shadow-md shadow-emerald-700/25 flex items-center space-x-1.5 active:scale-95 transition-all">
+<span>🚀</span>
+<span>Run demo</span>
+</button>
+</div>
+<!-- END: Bottom Centre Apple Vision Transport Dock -->
+<!-- BEGIN: Bottom One-Line Live Incident Event Ticker Strip -->
+<div class="absolute bottom-3 left-6 right-6 pointer-events-none flex justify-between items-center text-[11px] text-[#636366]" data-purpose="incident-event-ticker">
+<div class="pointer-events-auto apple-glass rounded-full px-3 py-1 flex items-center space-x-2 border border-white/10 text-[#C7C7CC]">
+<span class="text-amber-400 font-mono font-medium">14:22:05</span>
+<span class="text-white/40">•</span>
+<span class="flex items-center space-x-1">
+<span>🚧</span>
+<span class="font-medium text-white/90">Closed MG Road (accident)</span>
+</span>
+<span class="text-white/40">•</span>
+<span class="text-emerald-400 font-medium">18 vehicles rerouted</span>
+</div>
+<!-- Platform Precision Readout -->
+<div class="font-medium tracking-wide text-white/35">
+      TrafficOS Maps • Precision 0.1s
+    </div>
+</div>
+<!-- END: Bottom One-Line Live Incident Event Ticker Strip -->
+</body></html>

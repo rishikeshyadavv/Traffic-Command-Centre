@@ -12,7 +12,7 @@
 
 > **A real-time traffic simulation and emergency response system built on real OpenStreetMap road networks. Zero build step, zero API keys, runs entirely in the browser.**
 
-An interactive, browser-based traffic simulation platform that loads **real road geometry** from OpenStreetMap, simulates hundreds of vehicles with congestion-aware routing (Dijkstra / A*), supports live road closures with automatic rerouting, load-balanced traffic distribution, and a full **emergency vehicle dispatch system** with priority corridors.
+An interactive, browser-based traffic simulation platform that loads **real road geometry** from OpenStreetMap, simulates hundreds of vehicles with congestion-aware routing (Dijkstra / A*), supports live road closures with automatic rerouting, load-balanced traffic distribution, and a full **emergency vehicle dispatch system** with priority corridors — wrapped in an **Apple Maps × Pinterest card board** frosted glass UI with light/dark theme support.
 
 ---
 
@@ -27,9 +27,9 @@ An interactive, browser-based traffic simulation platform that loads **real road
 
 ### 🚗 Traffic Simulation Engine
 - Simulates **up to 1,500 vehicles** with realistic movement along road polylines
-- Vehicles rendered as emoji icons (🚗 🚕 🛺 🏍️) on a high-performance `<canvas>` layer
+- Vehicles rendered as emoji icons (🚗 🚕 🚙 🛺 🏍️ 🛵 🚌 🚚) on a high-performance `<canvas>` layer
 - **Seeded RNG** — simulations are deterministic and reproducible
-- Fixed-timestep simulation loop with adjustable speed (1x / 2x / 5x / 10x)
+- Fixed-timestep simulation loop with adjustable speed (1× / 2× / 5× / 10×)
 - Vehicles that arrive are respawned to maintain traffic density
 
 ### 🧠 Smart Routing & Congestion
@@ -56,20 +56,25 @@ An interactive, browser-based traffic simulation platform that loads **real road
 - Statistics: average trip time vs normal-traffic estimate
 
 ### 📊 Real-Time Analytics Dashboard
-- Live statistics: active vehicles, arrived, stranded, jammed roads, average speed
-- **Sparkline charts** for average speed and jammed-road count over time
-- **Hottest grid cells** ranked by density score
+- **Masonry card board** layout with live telemetry cards
+- **Peak V/C saturation** card with progress bar and status badge
+- Sparkline charts for average speed and congested corridor counts
+- **Hottest grid cells** ranked by density score with heatmap badges
 - Reroute distribution breakdown with per-route vehicle counts and costs
-- Click any road, vehicle, or grid cell for detailed inspection
-- Vehicle route visualization with origin/destination markers
+- Vehicle inspection: click any road, vehicle, or grid cell for route visualization with origin/destination markers
 
-### 🎨 UI / UX
-- **Glassmorphism** dark-theme design with frosted-glass panels
+### 🎨 Apple Maps × Pinterest Glass UI
+- **Frosted glass** design with `backdrop-filter: blur(28px) saturate(190%)` and hairline borders
+- **Light and Dark theme** toggle — crisp daylight mode and deep midnight mode
+- **Floating transport dock** (bottom-centre pill) with playback controls and segmented speed selector
+- **Glass circle button stack** (top-right): zoom, location, layers, fit, theme toggle
+- **Expandable legend pill** (bottom-left) with scale badge, congestion gradient, and emoji fleet roster
+- **Event log strip** with real-time timestamped notifications
+- Apple system palette: `#0A84FF` accent, `#34C759` free, `#FFD60A` busy, `#FF9F0A` heavy, `#FF3B30` jam
+- Inter + JetBrains Mono typography with tabular numbers
 - Three map modes: Street map, Heatmap, Schematic (no tiles)
-- Collapsible side panels for more map space
-- Canvas-rendered **density heatmap** (kernel-density of vehicle positions)
+- Collapsible side panels with masonry board analytics
 - Responsive layout with mobile support
-- Color-coded congestion legend: 🟢 Free → 🟡 Busy → 🟠 Heavy → 🔴 Jam
 
 ---
 
@@ -133,31 +138,32 @@ A `vercel.json` is included with the correct static-site configuration.
 
 ### 1. Load a Road Network
 - The app auto-loads **real OSM roads** around central Bangalore on startup
-- Change the **Area** scale (Neighbourhood → Region) in the left panel
-- Click **"Use my location"** to center on your GPS position (Bangalore area)
+- Change the **Area** scale (Neighbourhood → Region) in the left panel's Map tab
+- Click the **⌖** button (top-right) to center on your GPS position (Bangalore area)
 - Or **import** a saved Overpass JSON file for offline use
 
 ### 2. Run the Simulation
-- Switch to the **Simulate** tab
-- Click **Start** to begin the simulation, adjust **Speed** (1–10×) and **Vehicle count** (10–1500)
-- Click **Run demo** for a guided scenario: traffic builds for 4 seconds, then two busy roads close
+- Use the **floating transport dock** (bottom-centre) — click **Start**, adjust speed with the segmented control (1×–10×)
+- Set vehicle count (10–1500) in the **Simulate** tab (left panel)
+- Click **Run demo** for a guided scenario: traffic builds up, then busy roads close automatically
 
 ### 3. Create Road Closures
-- Switch to the **Closures** tab
+- Switch to the **Closures** tab in the left panel
 - Select a road from the dropdown or **click any road on the map**
 - Choose a reason (construction / accident / manual test) and close it
 - Watch vehicles get rerouted in real time with white glow on alternative roads
 
 ### 4. Dispatch Emergency Vehicles
-- Switch to the **Emergency** tab
+- Click **Dispatch Emergency** on the transport dock, or switch to the **Emergency** tab
 - Select a unit type and click **Dispatch** (random) or **Pick incident location** (click map)
 - Or hit **Run emergency demo** — dispatches all three units, then closes a road ahead at 5s
 - Toggle **"Clear the way"** to enable/disable priority corridors
 
 ### 5. Analyze & Compare
-- The **Analytics** panel (right) shows live stats, sparklines, and hotspot rankings
-- Click **Compare load balancing ON vs OFF** to run a headless what-if experiment
-- Switch to **Compare** mode to choose **A\* vs Dijkstra** and see expanded-node counts
+- The right **Analytics & Board** panel shows masonry telemetry cards with live stats
+- Monitor **Peak V/C**, sparklines, and hotspot rankings
+- Switch to **Compare** tab and click **Compare load balancing ON vs OFF** for a headless what-if experiment
+- Use **A\* vs Dijkstra** comparison mode to see expanded-node counts
 
 ---
 
@@ -165,15 +171,16 @@ A `vercel.json` is included with the correct static-site configuration.
 
 ```
 traffic-sim/
-├── index.html              # Single-page app entry point
-├── style.css               # Glassmorphism dark-theme styles
+├── index.html              # Single-page app entry (Apple Maps glass layout)
+├── style.css               # Apple Maps × Pinterest frosted glass stylesheet
+│                             (~1200 lines, light/dark themes, responsive)
 ├── serve.mjs               # Minimal Node.js static server (dev)
 ├── vercel.json             # Vercel deployment configuration
 ├── package.json            # Scripts: start, test
 │
 ├── src/
-│   ├── app.js              # Leaflet UI, canvas rendering, event wiring
-│   │                         (UI never owns simulation logic)
+│   ├── app.js              # Leaflet UI, canvas rendering, event wiring,
+│   │                         transport dock, theme toggle, event strip
 │   ├── data/
 │   │   └── osm.js          # Overpass API client, road parser, IndexedDB cache
 │   │                         Hedged requests to 4 endpoints for reliability
@@ -186,6 +193,11 @@ traffic-sim/
 │       ├── sim.js           # Core simulation: tick, spawn, closures, experiments,
 │       │                      emergency dispatch, corridor clearing, re-planning
 │       └── util.js          # Haversine distance + seeded PRNG
+│
+├── design/                  # Design reference screens (Stitch-generated)
+│   ├── main_light.html/png  # Light theme mockup
+│   ├── main_dark.html/png   # Dark theme mockup
+│   └── compare_light.html/png # Compare panel mockup
 │
 └── tests/
     └── engine.test.mjs     # 18 unit tests for the simulation engine
@@ -201,6 +213,8 @@ traffic-sim/
 | **Seeded PRNG** | Deterministic, reproducible runs for fair A/B comparisons |
 | **Hedged Overpass requests** | First server fires immediately; backups start at 4s/8s/12s intervals — first success wins |
 | **UI ↔ Engine separation** | `app.js` handles rendering; all simulation logic in `engine/` |
+| **Light/Dark theme** | Manual toggle via CSS custom properties, no flicker |
+| **Frosted glass surfaces** | `backdrop-filter: blur() saturate()` for depth over the live map |
 
 ---
 
@@ -276,10 +290,11 @@ Runs **18 unit tests** using Node.js built-in test runner (`node --test`), cover
 | **Map** | [Leaflet 1.9.4](https://leafletjs.com/) with Canvas renderer |
 | **Tiles** | [OpenStreetMap](https://www.openstreetmap.org/) standard tiles |
 | **Road Data** | [Overpass API](https://overpass-api.de/) (real OSM geometry) |
-| **Rendering** | HTML5 Canvas (vehicles, heatmap), CSS Glassmorphism |
+| **Typography** | [Inter](https://fonts.google.com/specimen/Inter) + [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) |
+| **Rendering** | HTML5 Canvas (vehicles, heatmap), CSS Frosted Glass |
 | **Server** | Minimal Node.js static server (`serve.mjs`) |
 | **Testing** | Node.js built-in test runner |
-| **Deployment** | Vercel (zero-build static) |
+| **Deployment** | [Vercel](https://vercel.com/) (zero-build static) |
 
 ---
 
